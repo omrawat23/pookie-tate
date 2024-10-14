@@ -12,7 +12,7 @@ const apikey = process.env.API_KEY;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 app.use(cors({
-    origin: 'http://localhost:5174',
+    origin: 'https://pookie-tate.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
