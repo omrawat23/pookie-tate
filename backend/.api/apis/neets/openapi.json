@@ -1,0 +1,3120 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Neets REST API",
+    "description": "Neets API for TTS and LLM",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.neets.ai/v1"
+    }
+  ],
+  "paths": {
+    "/chat/completions": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "operationId": "createChatCompletion",
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Create chat completion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messages": {
+                    "description": "A list of messages comprising the conversation so far.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "title": "User message",
+                          "properties": {
+                            "content": {
+                              "nullable": true,
+                              "description": "The contents of the user message.\n",
+                              "oneOf": [
+                                {
+                                  "type": "string",
+                                  "description": "The text contents of the message.",
+                                  "title": "Text content"
+                                },
+                                {
+                                  "type": "array",
+                                  "description": "An array of content parts with a defined type, each can be of type `text` or `image_url` when passing in images. You can pass multiple images by adding multiple `image_url` content parts. Image input is only supported when using the `gpt-4-visual-preview` model.",
+                                  "title": "Array of content parts",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "title": "Text content part",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "text"
+                                            ],
+                                            "description": "The type of the content part."
+                                          },
+                                          "text": {
+                                            "type": "string",
+                                            "description": "The text content."
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "text"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "title": "Image content part",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "enum": [
+                                              "image_url"
+                                            ],
+                                            "description": "The type of the content part."
+                                          },
+                                          "image_url": {
+                                            "type": "object",
+                                            "properties": {
+                                              "url": {
+                                                "type": "string",
+                                                "description": "Either a URL of the image or the base64 encoded image data.",
+                                                "format": "uri"
+                                              },
+                                              "detail": {
+                                                "type": "string",
+                                                "description": "Specifies the detail level of the image.",
+                                                "enum": [
+                                                  "auto",
+                                                  "low",
+                                                  "high"
+                                                ],
+                                                "default": "auto"
+                                              }
+                                            },
+                                            "required": [
+                                              "url"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "image_url"
+                                        ]
+                                      }
+                                    ],
+                                    "x-oaiExpandable": true
+                                  },
+                                  "minItems": 1
+                                }
+                              ]
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "user"
+                              ],
+                              "description": "The role of the messages author, in this case `user`."
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "role"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "title": "Assistant message",
+                          "properties": {
+                            "content": {
+                              "nullable": true,
+                              "type": "string",
+                              "description": "The contents of the assistant message.\n"
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "assistant"
+                              ],
+                              "description": "The role of the messages author, in this case `assistant`."
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "role"
+                          ]
+                        }
+                      ],
+                      "x-oaiExpandable": true
+                    }
+                  },
+                  "model": {
+                    "description": "ID of the model to use. `mistralai/Mixtral-8X7B-Instruct-v0.1`",
+                    "example": "mistralai/Mixtral-8X7B-Instruct-v0.1",
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "gpt-4-1106-preview",
+                          "gpt-4-vision-preview",
+                          "gpt-4",
+                          "gpt-4-0314",
+                          "gpt-4-0613",
+                          "gpt-4-32k",
+                          "gpt-4-32k-0314",
+                          "gpt-4-32k-0613",
+                          "gpt-3.5-turbo-1106",
+                          "gpt-3.5-turbo",
+                          "gpt-3.5-turbo-16k",
+                          "gpt-3.5-turbo-0301",
+                          "gpt-3.5-turbo-0613",
+                          "gpt-3.5-turbo-16k-0613"
+                        ]
+                      }
+                    ],
+                    "x-oaiTypeLabel": "string"
+                  },
+                  "frequency_penalty": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": -2,
+                    "maximum": 2,
+                    "nullable": true,
+                    "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.\n"
+                  },
+                  "max_tokens": {
+                    "description": "The maximum number of [tokens](/tokenizer) to generate in the chat completion.\n\nThe total length of input tokens and generated tokens is limited by the model's context length.\n",
+                    "default": "inf",
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 128,
+                    "default": 1,
+                    "example": 1,
+                    "nullable": true,
+                    "description": "How many chat completion choices to generate for each input message."
+                  },
+                  "presence_penalty": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": -2,
+                    "maximum": 2,
+                    "nullable": true,
+                    "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n"
+                  },
+                  "response_format": {
+                    "type": "object",
+                    "description": "An object specifying the format that the model must output.\n\nSetting to `{ \"type\": \"json_object\" }` enables JSON mode, which guarantees the message the model generates is valid JSON.\n\n**Important:** when using JSON mode, you **must** also instruct the model to produce JSON yourself via a system or user message. Without this, the model may generate an unending stream of whitespace until the generation reaches the token limit, resulting in increased latency and appearance of a \"stuck\" request. Also note that the message content may be partially cut off if `finish_reason=\"length\"`, which indicates the generation exceeded `max_tokens` or the conversation exceeded the max context length.\n",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "text",
+                          "json_object"
+                        ],
+                        "example": "json_object",
+                        "default": "text",
+                        "description": "Must be one of `text` or `json_object`."
+                      }
+                    }
+                  },
+                  "seed": {
+                    "type": "integer",
+                    "minimum": -9223372036854776000,
+                    "maximum": 9223372036854776000,
+                    "nullable": true,
+                    "description": "This feature is in Beta.\nIf specified, our system will make a best effort to sample deterministically, such that repeated requests with the same `seed` and parameters should return the same result.\nDeterminism is not guaranteed, and you should refer to the `system_fingerprint` response parameter to monitor changes in the backend.\n",
+                    "x-oaiMeta": {
+                      "beta": true
+                    }
+                  },
+                  "stop": {
+                    "description": "Up to 4 sequences where the API will stop generating further tokens.\n",
+                    "default": null,
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 4,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  "stream": {
+                    "description": "If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message.\n",
+                    "type": "boolean",
+                    "nullable": true,
+                    "default": false
+                  },
+                  "temperature": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "default": 1,
+                    "example": 1,
+                    "nullable": true,
+                    "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n"
+                  },
+                  "top_p": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "default": 1,
+                    "example": 1,
+                    "nullable": true,
+                    "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
+                  }
+                },
+                "required": [
+                  "model",
+                  "messages"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Represents a chat completion response returned by model, based on the provided input.",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "A unique identifier for the chat completion."
+                    },
+                    "choices": {
+                      "type": "array",
+                      "description": "A list of chat completion choices. Can be more than one if `n` is greater than 1.",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "finish_reason",
+                          "index",
+                          "message"
+                        ],
+                        "properties": {
+                          "finish_reason": {
+                            "type": "string",
+                            "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\n`content_filter` if content was omitted due to a flag from our content filters,\n`tool_calls` if the model called a tool, or `function_call` (deprecated) if the model called a function.\n",
+                            "enum": [
+                              "stop",
+                              "length",
+                              "tool_calls",
+                              "content_filter",
+                              "function_call"
+                            ]
+                          },
+                          "index": {
+                            "type": "integer",
+                            "description": "The index of the choice in the list of choices."
+                          },
+                          "message": {
+                            "type": "object",
+                            "description": "A chat completion message generated by the model.",
+                            "properties": {
+                              "content": {
+                                "type": "string",
+                                "description": "The contents of the message.",
+                                "nullable": true
+                              },
+                              "tool_calls": {
+                                "type": "array",
+                                "description": "The tool calls generated by the model, such as function calls.",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "The ID of the tool call."
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "function"
+                                      ],
+                                      "description": "The type of the tool. Currently, only `function` is supported."
+                                    },
+                                    "function": {
+                                      "type": "object",
+                                      "description": "The function that the model called.",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string",
+                                          "description": "The name of the function to call."
+                                        },
+                                        "arguments": {
+                                          "type": "string",
+                                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                                        }
+                                      },
+                                      "required": [
+                                        "name",
+                                        "arguments"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "type",
+                                    "function"
+                                  ]
+                                }
+                              },
+                              "role": {
+                                "type": "string",
+                                "enum": [
+                                  "assistant"
+                                ],
+                                "description": "The role of the author of this message."
+                              },
+                              "function_call": {
+                                "type": "object",
+                                "deprecated": true,
+                                "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                                "properties": {
+                                  "arguments": {
+                                    "type": "string",
+                                    "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "description": "The name of the function to call."
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "arguments"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "role",
+                              "content"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "created": {
+                      "type": "integer",
+                      "description": "The Unix timestamp (in seconds) of when the chat completion was created."
+                    },
+                    "model": {
+                      "type": "string",
+                      "description": "The model used for the chat completion."
+                    },
+                    "system_fingerprint": {
+                      "type": "string",
+                      "description": "This fingerprint represents the backend configuration that the model runs with.\n\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+                    },
+                    "object": {
+                      "type": "string",
+                      "description": "The object type, which is always `chat.completion`.",
+                      "enum": [
+                        "chat.completion"
+                      ]
+                    },
+                    "usage": {
+                      "type": "object",
+                      "description": "Usage statistics for the completion request.",
+                      "properties": {
+                        "completion_tokens": {
+                          "type": "integer",
+                          "description": "Number of tokens in the generated completion."
+                        },
+                        "prompt_tokens": {
+                          "type": "integer",
+                          "description": "Number of tokens in the prompt."
+                        },
+                        "total_tokens": {
+                          "type": "integer",
+                          "description": "Total number of tokens used in the request (prompt + completion)."
+                        }
+                      },
+                      "required": [
+                        "prompt_tokens",
+                        "completion_tokens",
+                        "total_tokens"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "choices",
+                    "created",
+                    "id",
+                    "model",
+                    "object"
+                  ],
+                  "x-oaiMeta": {
+                    "name": "The chat completion object",
+                    "group": "chat",
+                    "example": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-oaiMeta": {
+          "name": "Create chat completion",
+          "group": "chat",
+          "returns": "Returns a [chat completion](/docs/api-reference/chat/object) object, or a streamed sequence of [chat completion chunk](/docs/api-reference/chat/streaming) objects if the request is streamed.\n",
+          "path": "create",
+          "examples": [
+            {
+              "title": "Default",
+              "request": {
+                "curl": "curl https://api.openai.com/v1/chat/completions \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $OPENAI_API_KEY\" \\\n  -d '{\n    \"model\": \"VAR_model_id\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a helpful assistant.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": \"Hello!\"\n      }\n    ]\n  }'\n",
+                "python": "from openai import OpenAI\nclient = OpenAI()\n\ncompletion = client.chat.completions.create(\n  model=\"VAR_model_id\",\n  messages=[\n    {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n    {\"role\": \"user\", \"content\": \"Hello!\"}\n  ]\n)\n\nprint(completion.choices[0].message)\n",
+                "node.js": "import OpenAI from \"openai\";\n\nconst openai = new OpenAI();\n\nasync function main() {\n  const completion = await openai.chat.completions.create({\n    messages: [{ role: \"system\", content: \"You are a helpful assistant.\" }],\n    model: \"VAR_model_id\",\n  });\n\n  console.log(completion.choices[0]);\n}\n\nmain();"
+              },
+              "response": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+            },
+            {
+              "title": "Image input",
+              "request": {
+                "curl": "curl https://api.openai.com/v1/chat/completions \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $OPENAI_API_KEY\" \\\n  -d '{\n    \"model\": \"gpt-4-vision-preview\",\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": [\n          {\n            \"type\": \"text\",\n            \"text\": \"What’s in this image?\"\n          },\n          {\n            \"type\": \"image_url\",\n            \"image_url\": {\n              \"url\": \"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg\"\n            }\n          }\n        ]\n      }\n    ],\n    \"max_tokens\": 300\n  }'\n",
+                "python": "from openai import OpenAI\n\nclient = OpenAI()\n\nresponse = client.chat.completions.create(\n    model=\"gpt-4-vision-preview\",\n    messages=[\n        {\n            \"role\": \"user\",\n            \"content\": [\n                {\"type\": \"text\", \"text\": \"What’s in this image?\"},\n                {\n                    \"type\": \"image_url\",\n                    \"image_url\": \"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg\",\n                },\n            ],\n        }\n    ],\n    max_tokens=300,\n)\n\nprint(response.choices[0])\n",
+                "node.js": "import OpenAI from \"openai\";\n\nconst openai = new OpenAI();\n\nasync function main() {\n  const response = await openai.chat.completions.create({\n    model: \"gpt-4-vision-preview\",\n    messages: [\n      {\n        role: \"user\",\n        content: [\n          { type: \"text\", text: \"What’s in this image?\" },\n          {\n            type: \"image_url\",\n            image_url:\n              \"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg\",\n          },\n        ],\n      },\n    ],\n  });\n  console.log(response.choices[0]);\n}\nmain();"
+              },
+              "response": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+            },
+            {
+              "title": "Streaming",
+              "request": {
+                "curl": "curl https://api.openai.com/v1/chat/completions \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $OPENAI_API_KEY\" \\\n  -d '{\n    \"model\": \"VAR_model_id\",\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a helpful assistant.\"\n      },\n      {\n        \"role\": \"user\",\n        \"content\": \"Hello!\"\n      }\n    ],\n    \"stream\": true\n  }'\n",
+                "python": "from openai import OpenAI\nclient = OpenAI()\n\ncompletion = client.chat.completions.create(\n  model=\"VAR_model_id\",\n  messages=[\n    {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n    {\"role\": \"user\", \"content\": \"Hello!\"}\n  ],\n  stream=True\n)\n\nfor chunk in completion:\n  print(chunk.choices[0].delta)\n",
+                "node.js": "import OpenAI from \"openai\";\n\nconst openai = new OpenAI();\n\nasync function main() {\n  const completion = await openai.chat.completions.create({\n    model: \"VAR_model_id\",\n    messages: [\n      {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n      {\"role\": \"user\", \"content\": \"Hello!\"}\n    ],\n    stream: true,\n  });\n\n  for await (const chunk of completion) {\n    console.log(chunk.choices[0].delta.content);\n  }\n}\n\nmain();"
+              },
+              "response": "{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"!\"},\"finish_reason\":null}]}\n\n....\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\" today\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"?\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n"
+            },
+            {
+              "title": "Function calling",
+              "request": {
+                "curl": "curl https://api.openai.com/v1/chat/completions \\\n-H \"Content-Type: application/json\" \\\n-H \"Authorization: Bearer $OPENAI_API_KEY\" \\\n-d '{\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"What is the weather like in Boston?\"\n    }\n  ],\n  \"functions\": [\n    {\n      \"name\": \"get_current_weather\",\n      \"description\": \"Get the current weather in a given location\",\n      \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"location\": {\n            \"type\": \"string\",\n            \"description\": \"The city and state, e.g. San Francisco, CA\"\n          },\n          \"unit\": {\n            \"type\": \"string\",\n            \"enum\": [\"celsius\", \"fahrenheit\"]\n          }\n        },\n        \"required\": [\"location\"]\n      }\n    }\n  ],\n  \"function_call\": \"auto\"\n}'\n",
+                "python": "from openai import OpenAI\nclient = OpenAI()\n\nfunctions = [\n  {\n    \"name\": \"get_current_weather\",\n    \"description\": \"Get the current weather in a given location\",\n    \"parameters\": {\n        \"type\": \"object\",\n        \"properties\": {\n            \"location\": {\n                \"type\": \"string\",\n                \"description\": \"The city and state, e.g. San Francisco, CA\",\n            },\n            \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]},\n        },\n        \"required\": [\"location\"],\n    },\n  }\n]\nmessages = [{\"role\": \"user\", \"content\": \"What's the weather like in Boston today?\"}]\ncompletion = client.chat.completions.create(\n  model=\"VAR_model_id\",\n  messages=messages,\n  functions=functions,\n  function_call=\"auto\"\n)\n\nprint(completion)\n",
+                "node.js": "import OpenAI from \"openai\";\n\nconst openai = new OpenAI();\n\nasync function main() {\n  const messages = [{\"role\": \"user\", \"content\": \"What's the weather like in Boston today?\"}];\n  const functions = [\n      {\n          \"name\": \"get_current_weather\",\n          \"description\": \"Get the current weather in a given location\",\n          \"parameters\": {\n              \"type\": \"object\",\n              \"properties\": {\n                  \"location\": {\n                      \"type\": \"string\",\n                      \"description\": \"The city and state, e.g. San Francisco, CA\",\n                  },\n                  \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]},\n              },\n              \"required\": [\"location\"],\n          },\n      }\n  ];\n\n  const response = await openai.chat.completions.create({\n      model: \"gpt-3.5-turbo\",\n      messages: messages,\n      functions: functions,\n      function_call: \"auto\",  // auto is default, but we'll be explicit\n  });\n\n  console.log(response);\n}\n\nmain();"
+              },
+              "response": "{\n  \"choices\": [\n    {\n      \"finish_reason\": \"function_call\",\n      \"index\": 0,\n      \"message\": {\n        \"content\": null,\n        \"function_call\": {\n          \"arguments\": \"{\\n  \\\"location\\\": \\\"Boston, MA\\\"\\n}\",\n          \"name\": \"get_current_weather\"\n        },\n        \"role\": \"assistant\"\n      }\n    }\n  ],\n  \"created\": 1694028367,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"object\": \"chat.completion\",\n  \"usage\": {\n    \"completion_tokens\": 18,\n    \"prompt_tokens\": 82,\n    \"total_tokens\": 100\n  }\n}\n"
+            }
+          ]
+        }
+      }
+    },
+    "/tts": {
+      "post": {
+        "tags": [
+          "Audio"
+        ],
+        "summary": "Convert text to speech",
+        "description": "Generate spoken audio from input text.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "text": {
+                    "title": "Text",
+                    "description": "Text to convert to speech",
+                    "type": "string"
+                  },
+                  "voice_id": {
+                    "title": "Voice ID",
+                    "description": "ID of the voice to use. Voice IDs are dependent on the TTS model used. See the **Voice IDs** section on any [TTS model](/reference/models) for a list of available voices.",
+                    "type": "string"
+                  },
+                  "fmt": {
+                    "title": "Format",
+                    "description": "Output audio format. See [Audio Formats](/reference/supported-audio-formats) for a list of all supported output formats.",
+                    "allOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "aac",
+                          "flac",
+                          "mp3",
+                          "mulaw",
+                          "ogg",
+                          "opus",
+                          "wav"
+                        ],
+                        "title": "AudioFormat"
+                      }
+                    ],
+                    "default": "mp3"
+                  },
+                  "params": {
+                    "title": "Parameters",
+                    "description": "Model-specific parameters. TTS model parameters must be selected to make a valid request. See the [Models page](/reference/models) for a complete list of TTS models that you can use.\n",
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "model": {
+                            "const": "style-diff-500",
+                            "title": "Model",
+                            "default": "style-diff-500"
+                          },
+                          "alpha": {
+                            "type": "number",
+                            "maximum": 1,
+                            "minimum": 0,
+                            "title": "Alpha",
+                            "description": "Only used for long text inputs or in case of reference speaker, determines the timbre of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+                            "default": 0.3
+                          },
+                          "beta": {
+                            "type": "number",
+                            "maximum": 1,
+                            "minimum": 0,
+                            "title": "Beta",
+                            "description": "Only used for long text inputs or in case of reference speaker, determines the prosody of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+                            "default": 0.7
+                          },
+                          "diffusion_steps": {
+                            "type": "integer",
+                            "maximum": 20,
+                            "minimum": 5,
+                            "title": "Diffusion Steps",
+                            "description": "Number of diffusion steps",
+                            "default": 10
+                          },
+                          "embedding_scale": {
+                            "type": "number",
+                            "maximum": 10,
+                            "minimum": 0,
+                            "title": "Embedding Scale",
+                            "description": "Embedding scale, use higher values for pronounced emotion",
+                            "default": 1
+                          }
+                        },
+                        "type": "object",
+                        "title": "style-diff-500 Params",
+                        "description": "Parameters for the [style-diff-500](/reference/style-diff-500) TTS model"
+                      },
+                      {
+                        "properties": {
+                          "model": {
+                            "const": "vits",
+                            "title": "Model",
+                            "default": "vits"
+                          },
+                          "speed": {
+                            "type": "number",
+                            "maximum": 10,
+                            "minimum": 0.1,
+                            "title": "Speed",
+                            "description": "Adjusts the speed of speaker audio.",
+                            "default": 1
+                          }
+                        },
+                        "type": "object",
+                        "title": "VITS Params",
+                        "description": "Parameters for the [VITS](/reference/vits) TTS model"
+                      },
+                      {
+                        "properties": {
+                          "model": {
+                            "const": "ar-diff-50k",
+                            "title": "Model",
+                            "default": "ar-diff-50k"
+                          },
+                          "temperature": {
+                            "type": "number",
+                            "maximum": 3,
+                            "minimum": 0.01,
+                            "title": "Temperature",
+                            "default": 0.5
+                          },
+                          "diffusion_iterations": {
+                            "type": "integer",
+                            "maximum": 300,
+                            "minimum": 5,
+                            "title": "Diffusion Iterations",
+                            "default": 30
+                          }
+                        },
+                        "type": "object",
+                        "title": "ar-diff-50k Params",
+                        "description": "Parameters for the [ar-diff-50k](/reference/ar-diff-50k) TTS model"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "model",
+                      "mapping": {
+                        "ar-diff-50k": "#/components/schemas/ArDiff50kParams",
+                        "vits": "#/components/schemas/VITSParams",
+                        "style-diff-500": "#/components/schemas/StyleDiff500Params"
+                      }
+                    }
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "text",
+                  "voice_id",
+                  "params"
+                ],
+                "title": "TTSParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audio bytes representing generated speech",
+            "content": {
+              "audio/wav": {},
+              "audio/mpeg": {}
+            }
+          },
+          "400": {
+            "description": "Missing required parameter"
+          },
+          "401": {
+            "description": "Unable to authenticate"
+          },
+          "402": {
+            "description": "Insufficient credits. Sign up at https://neets.ai/login to get more credits."
+          }
+        }
+      }
+    },
+    "/voices": {
+      "servers": [
+        {
+          "url": "https://upload.neets.ai/v1"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Audio"
+        ],
+        "summary": "Voice cloning",
+        "description": "Pro users of Neets can now create their own voice clones. For the best results, use under 120MB of clear audio (no background noise) between 5 to 15 minutes. At this time, the supported content types include .wav, .mpeg and .flac",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "files": {
+                    "title": "Text",
+                    "description": "The complete file path of the audio to create the voice clone from. The path must be followed by a semicolon with the content type, for example; type=audio/wav. Multiple files can be sent by including this argument multiple times.",
+                    "type": "multipart/form-data"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "files"
+                ],
+                "title": "VoiceJobParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The response string contains an ID for the new voice that will be created. Once the request is received by the server, the new voice clone will be available to use after 5 minutes.",
+            "content": {
+              "id": {}
+            }
+          },
+          "400": {
+            "description": "Missing required parameter"
+          },
+          "401": {
+            "description": "Unable to authenticate"
+          },
+          "402": {
+            "description": "Insufficient credits. Sign up at https://neets.ai/login to get more credits."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Audio"
+        ],
+        "summary": "List available voices",
+        "description": "List available voices for TTS models",
+        "responses": {
+          "200": {
+            "description": "List of available voices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "voices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID of the voice"
+                          },
+                          "alias_of": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "ID of the Voice that this voice_id is an alias of"
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Name of the voice"
+                          },
+                          "supported_models": {
+                            "type": "array",
+                            "description": "A list of models that the voice can be used with.",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "schemas": {
+      "ArDiff50kParams": {
+        "properties": {
+          "model": {
+            "const": "ar-diff-50k",
+            "title": "Model",
+            "default": "ar-diff-50k"
+          },
+          "temperature": {
+            "type": "number",
+            "maximum": 3,
+            "minimum": 0.01,
+            "title": "Temperature",
+            "default": 0.5
+          },
+          "diffusion_iterations": {
+            "type": "integer",
+            "maximum": 300,
+            "minimum": 5,
+            "title": "Diffusion Iterations",
+            "default": 30
+          }
+        },
+        "type": "object",
+        "title": "ar-diff-50k Params",
+        "description": "Parameters for the [ar-diff-50k](/reference/ar-diff-50k) TTS model"
+      },
+      "StyleDiff500Params": {
+        "properties": {
+          "model": {
+            "const": "style-diff-500",
+            "title": "Model",
+            "default": "style-diff-500"
+          },
+          "alpha": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Alpha",
+            "description": "Only used for long text inputs or in case of reference speaker, determines the timbre of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+            "default": 0.3
+          },
+          "beta": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Beta",
+            "description": "Only used for long text inputs or in case of reference speaker, determines the prosody of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+            "default": 0.7
+          },
+          "diffusion_steps": {
+            "type": "integer",
+            "maximum": 20,
+            "minimum": 5,
+            "title": "Diffusion Steps",
+            "description": "Number of diffusion steps",
+            "default": 10
+          },
+          "embedding_scale": {
+            "type": "number",
+            "maximum": 10,
+            "minimum": 0,
+            "title": "Embedding Scale",
+            "description": "Embedding scale, use higher values for pronounced emotion",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "style-diff-500 Params",
+        "description": "Parameters for the [style-diff-500](/reference/style-diff-500) TTS model"
+      },
+      "VITSParams": {
+        "properties": {
+          "model": {
+            "const": "vits",
+            "title": "Model",
+            "default": "vits"
+          },
+          "speed": {
+            "type": "number",
+            "maximum": 10,
+            "minimum": 0.1,
+            "title": "Speed",
+            "description": "Adjusts the speed of speaker audio.",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "VITS Params",
+        "description": "Parameters for the [VITS](/reference/vits) TTS model"
+      },
+      "TTSParams": {
+        "properties": {
+          "text": {
+            "title": "Text",
+            "description": "Text to convert to speech",
+            "type": "string"
+          },
+          "voice_id": {
+            "title": "Voice ID",
+            "description": "ID of the voice to use. Voice IDs are dependent on the TTS model used. See the **Voice IDs** section on any [TTS model](/reference/models) for a list of available voices.",
+            "type": "string"
+          },
+          "fmt": {
+            "title": "Format",
+            "description": "Output audio format. See [Audio Formats](/reference/supported-audio-formats) for a list of all supported output formats.",
+            "allOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "aac",
+                  "flac",
+                  "mp3",
+                  "mulaw",
+                  "ogg",
+                  "opus",
+                  "wav"
+                ],
+                "title": "AudioFormat"
+              }
+            ],
+            "default": "mp3"
+          },
+          "params": {
+            "title": "Parameters",
+            "description": "Model-specific parameters. TTS model parameters must be selected to make a valid request. See the [Models page](/reference/models) for a complete list of TTS models that you can use.\n",
+            "oneOf": [
+              {
+                "properties": {
+                  "model": {
+                    "const": "style-diff-500",
+                    "title": "Model",
+                    "default": "style-diff-500"
+                  },
+                  "alpha": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Alpha",
+                    "description": "Only used for long text inputs or in case of reference speaker, determines the timbre of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+                    "default": 0.3
+                  },
+                  "beta": {
+                    "type": "number",
+                    "maximum": 1,
+                    "minimum": 0,
+                    "title": "Beta",
+                    "description": "Only used for long text inputs or in case of reference speaker, determines the prosody of the speaker. Use lower values to sample style based on previous or reference speech instead of text.",
+                    "default": 0.7
+                  },
+                  "diffusion_steps": {
+                    "type": "integer",
+                    "maximum": 20,
+                    "minimum": 5,
+                    "title": "Diffusion Steps",
+                    "description": "Number of diffusion steps",
+                    "default": 10
+                  },
+                  "embedding_scale": {
+                    "type": "number",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "title": "Embedding Scale",
+                    "description": "Embedding scale, use higher values for pronounced emotion",
+                    "default": 1
+                  }
+                },
+                "type": "object",
+                "title": "style-diff-500 Params",
+                "description": "Parameters for the [style-diff-500](/reference/style-diff-500) TTS model"
+              },
+              {
+                "properties": {
+                  "model": {
+                    "const": "vits",
+                    "title": "Model",
+                    "default": "vits"
+                  },
+                  "speed": {
+                    "type": "number",
+                    "maximum": 10,
+                    "minimum": 0.1,
+                    "title": "Speed",
+                    "description": "Adjusts the speed of speaker audio.",
+                    "default": 1
+                  }
+                },
+                "type": "object",
+                "title": "VITS Params",
+                "description": "Parameters for the [VITS](/reference/vits) TTS model"
+              },
+              {
+                "properties": {
+                  "model": {
+                    "const": "ar-diff-50k",
+                    "title": "Model",
+                    "default": "ar-diff-50k"
+                  },
+                  "temperature": {
+                    "type": "number",
+                    "maximum": 3,
+                    "minimum": 0.01,
+                    "title": "Temperature",
+                    "default": 0.5
+                  },
+                  "diffusion_iterations": {
+                    "type": "integer",
+                    "maximum": 300,
+                    "minimum": 5,
+                    "title": "Diffusion Iterations",
+                    "default": 30
+                  }
+                },
+                "type": "object",
+                "title": "ar-diff-50k Params",
+                "description": "Parameters for the [ar-diff-50k](/reference/ar-diff-50k) TTS model"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "model",
+              "mapping": {
+                "ar-diff-50k": "#/components/schemas/ArDiff50kParams",
+                "vits": "#/components/schemas/VITSParams",
+                "style-diff-500": "#/components/schemas/StyleDiff500Params"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "voice_id",
+          "params"
+        ],
+        "title": "TTSParams"
+      },
+      "VoiceJobParams": {
+        "properties": {
+          "files": {
+            "title": "Text",
+            "description": "The complete file path of the audio to create the voice clone from. The path must be followed by a semicolon with the content type, for example; type=audio/wav. Multiple files can be sent by including this argument multiple times.",
+            "type": "multipart/form-data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
+        ],
+        "title": "VoiceJobParams"
+      },
+      "AudioFormat": {
+        "type": "string",
+        "enum": [
+          "aac",
+          "flac",
+          "mp3",
+          "mulaw",
+          "ogg",
+          "opus",
+          "wav"
+        ],
+        "title": "AudioFormat"
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": false
+          },
+          "param": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": false
+          }
+        },
+        "required": [
+          "type",
+          "message",
+          "param",
+          "code"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": false
+              },
+              "param": {
+                "type": "string",
+                "nullable": true
+              },
+              "type": {
+                "type": "string",
+                "nullable": false
+              }
+            },
+            "required": [
+              "type",
+              "message",
+              "param",
+              "code"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "CreateCompletionRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "description": "ID of the model to use. Example: `mistralai/Mixtral-8X7B-Instruct-v0.1`\n",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "mistralai/Mixtral-8X7B-Instruct-v0.1"
+                ]
+              }
+            ],
+            "x-oaiTypeLabel": "string"
+          },
+          "prompt": {
+            "description": "The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.\n\nNote that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.\n",
+            "default": "<|endoftext|>",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string",
+                "default": "",
+                "example": "This is a test."
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "default": "",
+                  "example": "This is a test."
+                }
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "integer"
+                },
+                "example": "[1212, 318, 257, 1332, 13]"
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "example": "[[1212, 318, 257, 1332, 13]]"
+              }
+            ]
+          },
+          "best_of": {
+            "type": "integer",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 20,
+            "nullable": true,
+            "description": "Generates `best_of` completions server-side and returns the \"best\" (the one with the highest log probability per token). Results cannot be streamed.\n\nWhen used with `n`, `best_of` controls the number of candidate completions and `n` specifies how many to return – `best_of` must be greater than `n`.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n"
+          },
+          "echo": {
+            "type": "boolean",
+            "default": false,
+            "nullable": true,
+            "description": "Echo back the prompt in addition to the completion\n"
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "default": 0,
+            "minimum": -2,
+            "maximum": 2,
+            "nullable": true,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.\n"
+          },
+          "logprobs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5,
+            "default": null,
+            "nullable": true,
+            "description": "Include the log probabilities on the `logprobs` most likely tokens, as well the chosen tokens. For example, if `logprobs` is 5, the API will return a list of the 5 most likely tokens. The API will always return the `logprob` of the sampled token, so there may be up to `logprobs+1` elements in the response.\n\nThe maximum value for `logprobs` is 5.\n"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 16,
+            "example": 16,
+            "nullable": true,
+            "description": "The token count of your prompt plus `max_tokens` cannot exceed the model's context length.\n"
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "How many completions to generate for each prompt.\n\n**Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.\n"
+          },
+          "presence_penalty": {
+            "type": "number",
+            "default": 0,
+            "minimum": -2,
+            "maximum": 2,
+            "nullable": true,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": -9223372036854776000,
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "description": "If specified, our system will make a best effort to sample deterministically, such that repeated requests with the same `seed` and parameters should return the same result.\n\nDeterminism is not guaranteed, and you should refer to the `system_fingerprint` response parameter to monitor changes in the backend.\n"
+          },
+          "stop": {
+            "description": "Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.\n",
+            "default": null,
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string",
+                "default": "<|endoftext|>",
+                "example": "\n",
+                "nullable": true
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4,
+                "items": {
+                  "type": "string",
+                  "example": "[\"\\n\"]"
+                }
+              }
+            ]
+          },
+          "stream": {
+            "description": "Whether to stream back partial progress. If set, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message.\n",
+            "type": "boolean",
+            "nullable": true,
+            "default": false
+          },
+          "suffix": {
+            "description": "The suffix that comes after a completion of inserted text.",
+            "default": null,
+            "nullable": true,
+            "type": "string",
+            "example": "test."
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n"
+          },
+          "top_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
+          }
+        },
+        "required": [
+          "model",
+          "prompt"
+        ]
+      },
+      "CreateCompletionResponse": {
+        "type": "object",
+        "description": "Represents a completion response from the API. Note: both the streamed and non-streamed response objects share the same shape (unlike the chat endpoint).\n",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the completion."
+          },
+          "choices": {
+            "type": "array",
+            "description": "The list of completion choices the model generated for the input prompt.",
+            "items": {
+              "type": "object",
+              "required": [
+                "finish_reason",
+                "index",
+                "logprobs",
+                "text"
+              ],
+              "properties": {
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\nor `content_filter` if content was omitted due to a flag from our content filters.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "content_filter"
+                  ]
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "logprobs": {
+                  "type": "object",
+                  "nullable": true,
+                  "properties": {
+                    "text_offset": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    "token_logprobs": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "tokens": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "top_logprobs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                },
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the completion was created."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for completion."
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "description": "This fingerprint represents the backend configuration that the model runs with.\n\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always \"text_completion\"",
+            "enum": [
+              "text_completion"
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "description": "Usage statistics for the completion request.",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the generated completion."
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the prompt."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total number of tokens used in the request (prompt + completion)."
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "created",
+          "model",
+          "choices"
+        ],
+        "x-oaiMeta": {
+          "name": "The completion object",
+          "legacy": true,
+          "example": "{\n  \"id\": \"cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7\",\n  \"object\": \"text_completion\",\n  \"created\": 1589478378,\n  \"model\": \"gpt-3.5-turbo\",\n  \"choices\": [\n    {\n      \"text\": \"\\n\\nThis is indeed a test\",\n      \"index\": 0,\n      \"logprobs\": null,\n      \"finish_reason\": \"length\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 5,\n    \"completion_tokens\": 7,\n    \"total_tokens\": 12\n  }\n}\n"
+        }
+      },
+      "ChatCompletionRequestMessageContentPart": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "Text content part",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ],
+                "description": "The type of the content part."
+              },
+              "text": {
+                "type": "string",
+                "description": "The text content."
+              }
+            },
+            "required": [
+              "type",
+              "text"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "Image content part",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "image_url"
+                ],
+                "description": "The type of the content part."
+              },
+              "image_url": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Either a URL of the image or the base64 encoded image data.",
+                    "format": "uri"
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "Specifies the detail level of the image.",
+                    "enum": [
+                      "auto",
+                      "low",
+                      "high"
+                    ],
+                    "default": "auto"
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "image_url"
+            ]
+          }
+        ],
+        "x-oaiExpandable": true
+      },
+      "ChatCompletionRequestMessageContentPartImage": {
+        "type": "object",
+        "title": "Image content part",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image_url"
+            ],
+            "description": "The type of the content part."
+          },
+          "image_url": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "Either a URL of the image or the base64 encoded image data.",
+                "format": "uri"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Specifies the detail level of the image.",
+                "enum": [
+                  "auto",
+                  "low",
+                  "high"
+                ],
+                "default": "auto"
+              }
+            },
+            "required": [
+              "url"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "image_url"
+        ]
+      },
+      "ChatCompletionRequestMessageContentPartText": {
+        "type": "object",
+        "title": "Text content part",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text"
+            ],
+            "description": "The type of the content part."
+          },
+          "text": {
+            "type": "string",
+            "description": "The text content."
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ]
+      },
+      "ChatCompletionRequestMessage": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "User message",
+            "properties": {
+              "content": {
+                "nullable": true,
+                "description": "The contents of the user message.\n",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "The text contents of the message.",
+                    "title": "Text content"
+                  },
+                  {
+                    "type": "array",
+                    "description": "An array of content parts with a defined type, each can be of type `text` or `image_url` when passing in images. You can pass multiple images by adding multiple `image_url` content parts. Image input is only supported when using the `gpt-4-visual-preview` model.",
+                    "title": "Array of content parts",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "title": "Text content part",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "text"
+                              ],
+                              "description": "The type of the content part."
+                            },
+                            "text": {
+                              "type": "string",
+                              "description": "The text content."
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "title": "Image content part",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "image_url"
+                              ],
+                              "description": "The type of the content part."
+                            },
+                            "image_url": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "description": "Either a URL of the image or the base64 encoded image data.",
+                                  "format": "uri"
+                                },
+                                "detail": {
+                                  "type": "string",
+                                  "description": "Specifies the detail level of the image.",
+                                  "enum": [
+                                    "auto",
+                                    "low",
+                                    "high"
+                                  ],
+                                  "default": "auto"
+                                }
+                              },
+                              "required": [
+                                "url"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "image_url"
+                          ]
+                        }
+                      ],
+                      "x-oaiExpandable": true
+                    },
+                    "minItems": 1
+                  }
+                ]
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user"
+                ],
+                "description": "The role of the messages author, in this case `user`."
+              }
+            },
+            "required": [
+              "content",
+              "role"
+            ]
+          },
+          {
+            "type": "object",
+            "title": "Assistant message",
+            "properties": {
+              "content": {
+                "nullable": true,
+                "type": "string",
+                "description": "The contents of the assistant message.\n"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "assistant"
+                ],
+                "description": "The role of the messages author, in this case `assistant`."
+              }
+            },
+            "required": [
+              "content",
+              "role"
+            ]
+          }
+        ],
+        "x-oaiExpandable": true
+      },
+      "ChatCompletionRequestUserMessage": {
+        "type": "object",
+        "title": "User message",
+        "properties": {
+          "content": {
+            "nullable": true,
+            "description": "The contents of the user message.\n",
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "The text contents of the message.",
+                "title": "Text content"
+              },
+              {
+                "type": "array",
+                "description": "An array of content parts with a defined type, each can be of type `text` or `image_url` when passing in images. You can pass multiple images by adding multiple `image_url` content parts. Image input is only supported when using the `gpt-4-visual-preview` model.",
+                "title": "Array of content parts",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "title": "Text content part",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "text"
+                          ],
+                          "description": "The type of the content part."
+                        },
+                        "text": {
+                          "type": "string",
+                          "description": "The text content."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "text"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "title": "Image content part",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "image_url"
+                          ],
+                          "description": "The type of the content part."
+                        },
+                        "image_url": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "description": "Either a URL of the image or the base64 encoded image data.",
+                              "format": "uri"
+                            },
+                            "detail": {
+                              "type": "string",
+                              "description": "Specifies the detail level of the image.",
+                              "enum": [
+                                "auto",
+                                "low",
+                                "high"
+                              ],
+                              "default": "auto"
+                            }
+                          },
+                          "required": [
+                            "url"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "image_url"
+                      ]
+                    }
+                  ],
+                  "x-oaiExpandable": true
+                },
+                "minItems": 1
+              }
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user"
+            ],
+            "description": "The role of the messages author, in this case `user`."
+          }
+        },
+        "required": [
+          "content",
+          "role"
+        ]
+      },
+      "ChatCompletionRequestAssistantMessage": {
+        "type": "object",
+        "title": "Assistant message",
+        "properties": {
+          "content": {
+            "nullable": true,
+            "type": "string",
+            "description": "The contents of the assistant message.\n"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "assistant"
+            ],
+            "description": "The role of the messages author, in this case `assistant`."
+          }
+        },
+        "required": [
+          "content",
+          "role"
+        ]
+      },
+      "ChatCompletionRequestFunctionMessage": {
+        "type": "object",
+        "title": "Function message",
+        "deprecated": true,
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "function"
+            ],
+            "description": "The role of the messages author, in this case `function`."
+          },
+          "content": {
+            "type": "string",
+            "nullable": true,
+            "description": "The return value from the function call, to return to the model."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the function to call."
+          }
+        },
+        "required": [
+          "role",
+          "name",
+          "content"
+        ]
+      },
+      "FunctionParameters": {
+        "type": "object",
+        "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/gpt/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format.\n\nTo describe a function that accepts no parameters, provide the value `{\"type\": \"object\", \"properties\": {}}`.",
+        "additionalProperties": true
+      },
+      "ChatCompletionFunctions": {
+        "type": "object",
+        "deprecated": true,
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A description of what the function does, used by the model to choose when and how to call the function."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64."
+          },
+          "parameters": {
+            "type": "object",
+            "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/gpt/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format.\n\nTo describe a function that accepts no parameters, provide the value `{\"type\": \"object\", \"properties\": {}}`.",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "name",
+          "parameters"
+        ]
+      },
+      "ChatCompletionFunctionCallOption": {
+        "type": "object",
+        "description": "Specifying a particular function via `{\"name\": \"my_function\"}` forces the model to call that function.\n",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the function to call."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ChatCompletionTool": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ],
+            "description": "The type of the tool. Currently, only `function` is supported."
+          },
+          "function": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "A description of what the function does, used by the model to choose when and how to call the function."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64."
+              },
+              "parameters": {
+                "type": "object",
+                "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/gpt/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format.\n\nTo describe a function that accepts no parameters, provide the value `{\"type\": \"object\", \"properties\": {}}`.",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "name",
+              "parameters"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "function"
+        ]
+      },
+      "FunctionObject": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A description of what the function does, used by the model to choose when and how to call the function."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64."
+          },
+          "parameters": {
+            "type": "object",
+            "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/gpt/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format.\n\nTo describe a function that accepts no parameters, provide the value `{\"type\": \"object\", \"properties\": {}}`.",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "name",
+          "parameters"
+        ]
+      },
+      "ChatCompletionToolChoiceOption": {
+        "description": "Controls which (if any) function is called by the model.\n`none` means the model will not call a function and instead generates a message.\n`auto` means the model can pick between generating a message or calling a function.\nSpecifying a particular function via `{\"type: \"function\", \"function\": {\"name\": \"my_function\"}}` forces the model to call that function.\n\n`none` is the default when no functions are present. `auto` is the default if functions are present.\n",
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "`none` means the model will not call a function and instead generates a message. `auto` means the model can pick between generating a message or calling a function.\n",
+            "enum": [
+              "none",
+              "auto"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Specifies a tool the model should use. Use to force the model to call a specific function.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "function"
+                ],
+                "description": "The type of the tool. Currently, only `function` is supported."
+              },
+              "function": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the function to call."
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        ],
+        "x-oaiExpandable": true
+      },
+      "ChatCompletionNamedToolChoice": {
+        "type": "object",
+        "description": "Specifies a tool the model should use. Use to force the model to call a specific function.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ],
+            "description": "The type of the tool. Currently, only `function` is supported."
+          },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the function to call."
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        }
+      },
+      "ChatCompletionMessageToolCalls": {
+        "type": "array",
+        "description": "The tool calls generated by the model, such as function calls.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The ID of the tool call."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "function"
+              ],
+              "description": "The type of the tool. Currently, only `function` is supported."
+            },
+            "function": {
+              "type": "object",
+              "description": "The function that the model called.",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the function to call."
+                },
+                "arguments": {
+                  "type": "string",
+                  "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                }
+              },
+              "required": [
+                "name",
+                "arguments"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "function"
+          ]
+        }
+      },
+      "ChatCompletionMessageToolCall": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the tool call."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ],
+            "description": "The type of the tool. Currently, only `function` is supported."
+          },
+          "function": {
+            "type": "object",
+            "description": "The function that the model called.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the function to call."
+              },
+              "arguments": {
+                "type": "string",
+                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+              }
+            },
+            "required": [
+              "name",
+              "arguments"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "function"
+        ]
+      },
+      "ChatCompletionMessageToolCallChunk": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string",
+            "description": "The ID of the tool call."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ],
+            "description": "The type of the tool. Currently, only `function` is supported."
+          },
+          "function": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the function to call."
+              },
+              "arguments": {
+                "type": "string",
+                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+              }
+            }
+          }
+        },
+        "required": [
+          "index"
+        ]
+      },
+      "ChatCompletionRole": {
+        "type": "string",
+        "description": "The role of the author of a message",
+        "enum": [
+          "system",
+          "user",
+          "assistant",
+          "tool",
+          "function"
+        ]
+      },
+      "ChatCompletionResponseMessage": {
+        "type": "object",
+        "description": "A chat completion message generated by the model.",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The contents of the message.",
+            "nullable": true
+          },
+          "tool_calls": {
+            "type": "array",
+            "description": "The tool calls generated by the model, such as function calls.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The ID of the tool call."
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "function"
+                  ],
+                  "description": "The type of the tool. Currently, only `function` is supported."
+                },
+                "function": {
+                  "type": "object",
+                  "description": "The function that the model called.",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the function to call."
+                    },
+                    "arguments": {
+                      "type": "string",
+                      "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "arguments"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "function"
+              ]
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "assistant"
+            ],
+            "description": "The role of the author of this message."
+          },
+          "function_call": {
+            "type": "object",
+            "deprecated": true,
+            "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+            "properties": {
+              "arguments": {
+                "type": "string",
+                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the function to call."
+              }
+            },
+            "required": [
+              "name",
+              "arguments"
+            ]
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "ChatCompletionStreamResponseDelta": {
+        "type": "object",
+        "description": "A chat completion delta generated by streamed model responses.",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The contents of the chunk message.",
+            "nullable": true
+          },
+          "function_call": {
+            "deprecated": true,
+            "type": "object",
+            "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+            "properties": {
+              "arguments": {
+                "type": "string",
+                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the function to call."
+              }
+            }
+          },
+          "tool_calls": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The ID of the tool call."
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "function"
+                  ],
+                  "description": "The type of the tool. Currently, only `function` is supported."
+                },
+                "function": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the function to call."
+                    },
+                    "arguments": {
+                      "type": "string",
+                      "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                    }
+                  }
+                }
+              },
+              "required": [
+                "index"
+              ]
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user",
+              "assistant",
+              "tool"
+            ],
+            "description": "The role of the author of this message."
+          }
+        }
+      },
+      "CreateChatCompletionRequest": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "A list of messages comprising the conversation so far.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "title": "User message",
+                  "properties": {
+                    "content": {
+                      "nullable": true,
+                      "description": "The contents of the user message.\n",
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "The text contents of the message.",
+                          "title": "Text content"
+                        },
+                        {
+                          "type": "array",
+                          "description": "An array of content parts with a defined type, each can be of type `text` or `image_url` when passing in images. You can pass multiple images by adding multiple `image_url` content parts. Image input is only supported when using the `gpt-4-visual-preview` model.",
+                          "title": "Array of content parts",
+                          "items": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "title": "Text content part",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "text"
+                                    ],
+                                    "description": "The type of the content part."
+                                  },
+                                  "text": {
+                                    "type": "string",
+                                    "description": "The text content."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "title": "Image content part",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image_url"
+                                    ],
+                                    "description": "The type of the content part."
+                                  },
+                                  "image_url": {
+                                    "type": "object",
+                                    "properties": {
+                                      "url": {
+                                        "type": "string",
+                                        "description": "Either a URL of the image or the base64 encoded image data.",
+                                        "format": "uri"
+                                      },
+                                      "detail": {
+                                        "type": "string",
+                                        "description": "Specifies the detail level of the image.",
+                                        "enum": [
+                                          "auto",
+                                          "low",
+                                          "high"
+                                        ],
+                                        "default": "auto"
+                                      }
+                                    },
+                                    "required": [
+                                      "url"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "image_url"
+                                ]
+                              }
+                            ],
+                            "x-oaiExpandable": true
+                          },
+                          "minItems": 1
+                        }
+                      ]
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "user"
+                      ],
+                      "description": "The role of the messages author, in this case `user`."
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "role"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "title": "Assistant message",
+                  "properties": {
+                    "content": {
+                      "nullable": true,
+                      "type": "string",
+                      "description": "The contents of the assistant message.\n"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "assistant"
+                      ],
+                      "description": "The role of the messages author, in this case `assistant`."
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "role"
+                  ]
+                }
+              ],
+              "x-oaiExpandable": true
+            }
+          },
+          "model": {
+            "description": "ID of the model to use. `mistralai/Mixtral-8X7B-Instruct-v0.1`",
+            "example": "mistralai/Mixtral-8X7B-Instruct-v0.1",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "gpt-4-1106-preview",
+                  "gpt-4-vision-preview",
+                  "gpt-4",
+                  "gpt-4-0314",
+                  "gpt-4-0613",
+                  "gpt-4-32k",
+                  "gpt-4-32k-0314",
+                  "gpt-4-32k-0613",
+                  "gpt-3.5-turbo-1106",
+                  "gpt-3.5-turbo",
+                  "gpt-3.5-turbo-16k",
+                  "gpt-3.5-turbo-0301",
+                  "gpt-3.5-turbo-0613",
+                  "gpt-3.5-turbo-16k-0613"
+                ]
+              }
+            ],
+            "x-oaiTypeLabel": "string"
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "default": 0,
+            "minimum": -2,
+            "maximum": 2,
+            "nullable": true,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.\n"
+          },
+          "max_tokens": {
+            "description": "The maximum number of [tokens](/tokenizer) to generate in the chat completion.\n\nThe total length of input tokens and generated tokens is limited by the model's context length.\n",
+            "default": "inf",
+            "type": "integer",
+            "nullable": true
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 128,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "How many chat completion choices to generate for each input message."
+          },
+          "presence_penalty": {
+            "type": "number",
+            "default": 0,
+            "minimum": -2,
+            "maximum": 2,
+            "nullable": true,
+            "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.\n"
+          },
+          "response_format": {
+            "type": "object",
+            "description": "An object specifying the format that the model must output.\n\nSetting to `{ \"type\": \"json_object\" }` enables JSON mode, which guarantees the message the model generates is valid JSON.\n\n**Important:** when using JSON mode, you **must** also instruct the model to produce JSON yourself via a system or user message. Without this, the model may generate an unending stream of whitespace until the generation reaches the token limit, resulting in increased latency and appearance of a \"stuck\" request. Also note that the message content may be partially cut off if `finish_reason=\"length\"`, which indicates the generation exceeded `max_tokens` or the conversation exceeded the max context length.\n",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "json_object"
+                ],
+                "example": "json_object",
+                "default": "text",
+                "description": "Must be one of `text` or `json_object`."
+              }
+            }
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": -9223372036854776000,
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "description": "This feature is in Beta.\nIf specified, our system will make a best effort to sample deterministically, such that repeated requests with the same `seed` and parameters should return the same result.\nDeterminism is not guaranteed, and you should refer to the `system_fingerprint` response parameter to monitor changes in the backend.\n",
+            "x-oaiMeta": {
+              "beta": true
+            }
+          },
+          "stop": {
+            "description": "Up to 4 sequences where the API will stop generating further tokens.\n",
+            "default": null,
+            "oneOf": [
+              {
+                "type": "string",
+                "nullable": true
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4,
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "stream": {
+            "description": "If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format) as they become available, with the stream terminated by a `data: [DONE]` message.\n",
+            "type": "boolean",
+            "nullable": true,
+            "default": false
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.\n\nWe generally recommend altering this or `top_p` but not both.\n"
+          },
+          "top_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 1,
+            "example": 1,
+            "nullable": true,
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\n\nWe generally recommend altering this or `temperature` but not both.\n"
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ]
+      },
+      "CreateChatCompletionResponse": {
+        "type": "object",
+        "description": "Represents a chat completion response returned by model, based on the provided input.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion."
+          },
+          "choices": {
+            "type": "array",
+            "description": "A list of chat completion choices. Can be more than one if `n` is greater than 1.",
+            "items": {
+              "type": "object",
+              "required": [
+                "finish_reason",
+                "index",
+                "message"
+              ],
+              "properties": {
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\n`content_filter` if content was omitted due to a flag from our content filters,\n`tool_calls` if the model called a tool, or `function_call` (deprecated) if the model called a function.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "tool_calls",
+                    "content_filter",
+                    "function_call"
+                  ]
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The index of the choice in the list of choices."
+                },
+                "message": {
+                  "type": "object",
+                  "description": "A chat completion message generated by the model.",
+                  "properties": {
+                    "content": {
+                      "type": "string",
+                      "description": "The contents of the message.",
+                      "nullable": true
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "description": "The tool calls generated by the model, such as function calls.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "The ID of the tool call."
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "function"
+                            ],
+                            "description": "The type of the tool. Currently, only `function` is supported."
+                          },
+                          "function": {
+                            "type": "object",
+                            "description": "The function that the model called.",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the function to call."
+                              },
+                              "arguments": {
+                                "type": "string",
+                                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "arguments"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "function"
+                        ]
+                      }
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "assistant"
+                      ],
+                      "description": "The role of the author of this message."
+                    },
+                    "function_call": {
+                      "type": "object",
+                      "deprecated": true,
+                      "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                      "properties": {
+                        "arguments": {
+                          "type": "string",
+                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "arguments"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "content"
+                  ]
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the chat completion was created."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for the chat completion."
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "description": "This fingerprint represents the backend configuration that the model runs with.\n\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always `chat.completion`.",
+            "enum": [
+              "chat.completion"
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "description": "Usage statistics for the completion request.",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the generated completion."
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the prompt."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total number of tokens used in the request (prompt + completion)."
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ]
+          }
+        },
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "x-oaiMeta": {
+          "name": "The chat completion object",
+          "group": "chat",
+          "example": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+        }
+      },
+      "CreateChatCompletionFunctionResponse": {
+        "type": "object",
+        "description": "Represents a chat completion response returned by model, based on the provided input.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion."
+          },
+          "choices": {
+            "type": "array",
+            "description": "A list of chat completion choices. Can be more than one if `n` is greater than 1.",
+            "items": {
+              "type": "object",
+              "required": [
+                "finish_reason",
+                "index",
+                "message"
+              ],
+              "properties": {
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence, `length` if the maximum number of tokens specified in the request was reached, `content_filter` if content was omitted due to a flag from our content filters, or `function_call` if the model called a function.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "function_call",
+                    "content_filter"
+                  ]
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The index of the choice in the list of choices."
+                },
+                "message": {
+                  "type": "object",
+                  "description": "A chat completion message generated by the model.",
+                  "properties": {
+                    "content": {
+                      "type": "string",
+                      "description": "The contents of the message.",
+                      "nullable": true
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "description": "The tool calls generated by the model, such as function calls.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "The ID of the tool call."
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "function"
+                            ],
+                            "description": "The type of the tool. Currently, only `function` is supported."
+                          },
+                          "function": {
+                            "type": "object",
+                            "description": "The function that the model called.",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the function to call."
+                              },
+                              "arguments": {
+                                "type": "string",
+                                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "arguments"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "function"
+                        ]
+                      }
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "assistant"
+                      ],
+                      "description": "The role of the author of this message."
+                    },
+                    "function_call": {
+                      "type": "object",
+                      "deprecated": true,
+                      "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                      "properties": {
+                        "arguments": {
+                          "type": "string",
+                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "arguments"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "content"
+                  ]
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the chat completion was created."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for the chat completion."
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "description": "This fingerprint represents the backend configuration that the model runs with.\n\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always `chat.completion`.",
+            "enum": [
+              "chat.completion"
+            ]
+          },
+          "usage": {
+            "type": "object",
+            "description": "Usage statistics for the completion request.",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the generated completion."
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the prompt."
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total number of tokens used in the request (prompt + completion)."
+              }
+            },
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens"
+            ]
+          }
+        },
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "x-oaiMeta": {
+          "name": "The chat completion object",
+          "group": "chat",
+          "example": "{\n  \"choices\": [\n    {\n      \"finish_reason\": \"function_call\",\n      \"index\": 0,\n      \"message\": {\n        \"content\": null,\n        \"function_call\": {\n          \"arguments\": \"{\\n  \\\"location\\\": \\\"Boston, MA\\\"\\n}\",\n          \"name\": \"get_current_weather\"\n        },\n        \"role\": \"assistant\"\n      }\n    }\n  ],\n  \"created\": 1694028367,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"object\": \"chat.completion\",\n  \"usage\": {\n    \"completion_tokens\": 18,\n    \"prompt_tokens\": 82,\n    \"total_tokens\": 100\n  }\n}\n"
+        }
+      },
+      "CreateChatCompletionStreamResponse": {
+        "type": "object",
+        "description": "Represents a streamed chunk of a chat completion response returned by model, based on the provided input.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the chat completion. Each chunk has the same ID."
+          },
+          "choices": {
+            "type": "array",
+            "description": "A list of chat completion choices. Can be more than one if `n` is greater than 1.",
+            "items": {
+              "type": "object",
+              "required": [
+                "delta",
+                "finish_reason",
+                "index"
+              ],
+              "properties": {
+                "delta": {
+                  "type": "object",
+                  "description": "A chat completion delta generated by streamed model responses.",
+                  "properties": {
+                    "content": {
+                      "type": "string",
+                      "description": "The contents of the chunk message.",
+                      "nullable": true
+                    },
+                    "function_call": {
+                      "deprecated": true,
+                      "type": "object",
+                      "description": "Deprecated and replaced by `tool_calls`. The name and arguments of a function that should be called, as generated by the model.",
+                      "properties": {
+                        "arguments": {
+                          "type": "string",
+                          "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The name of the function to call."
+                        }
+                      }
+                    },
+                    "tool_calls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "index": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string",
+                            "description": "The ID of the tool call."
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "function"
+                            ],
+                            "description": "The type of the tool. Currently, only `function` is supported."
+                          },
+                          "function": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the function to call."
+                              },
+                              "arguments": {
+                                "type": "string",
+                                "description": "The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function."
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "index"
+                        ]
+                      }
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "system",
+                        "user",
+                        "assistant",
+                        "tool"
+                      ],
+                      "description": "The role of the author of this message."
+                    }
+                  }
+                },
+                "finish_reason": {
+                  "type": "string",
+                  "description": "The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,\n`length` if the maximum number of tokens specified in the request was reached,\n`content_filter` if content was omitted due to a flag from our content filters,\n`tool_calls` if the model called a tool, or `function_call` (deprecated) if the model called a function.\n",
+                  "enum": [
+                    "stop",
+                    "length",
+                    "tool_calls",
+                    "content_filter",
+                    "function_call"
+                  ],
+                  "nullable": true
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "The index of the choice in the list of choices."
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "The Unix timestamp (in seconds) of when the chat completion was created. Each chunk has the same timestamp."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model to generate the completion."
+          },
+          "system_fingerprint": {
+            "type": "string",
+            "description": "This fingerprint represents the backend configuration that the model runs with.\nCan be used in conjunction with the `seed` request parameter to understand when backend changes have been made that might impact determinism.\n"
+          },
+          "object": {
+            "type": "string",
+            "description": "The object type, which is always `chat.completion.chunk`.",
+            "enum": [
+              "chat.completion.chunk"
+            ]
+          }
+        },
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "x-oaiMeta": {
+          "name": "The chat completion chunk object",
+          "group": "chat",
+          "example": "{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"!\"},\"finish_reason\":null}]}\n\n....\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\" today\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{\"content\":\"?\"},\"finish_reason\":null}]}\n\n{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion.chunk\",\"created\":1694268190,\"model\":\"gpt-3.5-turbo-0613\", \"system_fingerprint\": \"fp_44709d6fcb\", \"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n"
+        }
+      },
+      "CreateChatCompletionImageResponse": {
+        "type": "object",
+        "description": "Represents a streamed chunk of a chat completion response returned by model, based on the provided input.",
+        "x-oaiMeta": {
+          "name": "The chat completion chunk object",
+          "group": "chat",
+          "example": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-3.5-turbo-0613\",\n  \"system_fingerprint\": \"fp_44709d6fcb\",\n  \"choices\": [{\n    \"index\": 0,\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"\\n\\nHello there, how may I assist you today?\",\n    },\n    \"finish_reason\": \"stop\"\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 9,\n    \"completion_tokens\": 12,\n    \"total_tokens\": 21\n  }\n}\n"
+        }
+      },
+      "CompletionUsage": {
+        "type": "object",
+        "description": "Usage statistics for the completion request.",
+        "properties": {
+          "completion_tokens": {
+            "type": "integer",
+            "description": "Number of tokens in the generated completion."
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "description": "Number of tokens in the prompt."
+          },
+          "total_tokens": {
+            "type": "integer",
+            "description": "Total number of tokens used in the request (prompt + completion)."
+          }
+        },
+        "required": [
+          "prompt_tokens",
+          "completion_tokens",
+          "total_tokens"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}

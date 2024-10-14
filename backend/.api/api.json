@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "neets",
+      "source": "@neets/v1.0#1ycw3pm0cx79q7",
+      "integrity": "sha512-qUohHGiOQKbkzqile41riD8+ZnuTMDnSYu3iHjld4JSrVcKObpQ183WdxZYMGbohwqQ66fiFOU0/FpNGTAtMQQ==",
+      "installerVersion": "6.1.2"
+    }
+  ]
+}
