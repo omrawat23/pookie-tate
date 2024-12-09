@@ -12,7 +12,7 @@ const apikey = process.env.API_KEY;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 app.use(cors({
-    origin: 'https://taylorswiftt.vercel.app',
+    origin: 'https://pookie-tate.vercel.app',
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -34,7 +34,7 @@ async function say(text) {
         },
         body: JSON.stringify({
             text: text,
-            voice_id: 'taylor-swift',
+            voice_id: 'andrew-tate',
             params: {
                 model: 'ar-diff-50k',
             },
