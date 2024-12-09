@@ -112,7 +112,7 @@ export default function ChatbotComponent() {
       <Card className="w-full max-w-md bg-gray-900 border-gray-800 text-white">
         <div className="flex flex-col items-center p-6 border-b border-gray-800">
           <img
-            src="/andrew-tate.jpg"
+            src="https://pattonvilletoday.com/wp-content/uploads/2022/10/api.openverse-e1664974397180.webp"
             alt="Andrew Tate"
             className="w-24 h-24 rounded-lg mb-4"
           />
