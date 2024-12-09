@@ -40,12 +40,11 @@ async function say(text) {
             },
         }),
     });
-    
     if (!response.ok) {
-        throw new Error(`TTS API Error: ${response.status}`);
+        throw new Error(`Error with TTS API: ${response.status} ${response.statusText}`);
     }
-    
-    return await response.arrayBuffer();
+    const audioBuffer = await response.buffer();
+    return audioBuffer;
 }
 
 const INAPPROPRIATE_WORDS = ['bad', 'offensive', 'inappropriate'];
