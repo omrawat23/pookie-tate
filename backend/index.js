@@ -12,8 +12,8 @@ const apikey = process.env.API_KEY;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 app.use(cors({
-    origin: 'https://pookie-tate.vercel.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: ['https://pookie-tate.vercel.app', 'http://localhost:5173'],
+    methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -23,10 +23,8 @@ const model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
 });
 
-// Middleware
 app.use(bodyParser.json());
 
-// Neets API TTS function
 async function say(text) {
     const response = await fetch('https://api.neets.ai/v1/tts', {
         method: 'POST',
@@ -37,86 +35,86 @@ async function say(text) {
         body: JSON.stringify({
             text: text,
             voice_id: 'andrew-tate',
-            params: {
-                model: 'ar-diff-50k',
-            },
+            params: { model: 'ar-diff-50k' },
         }),
     });
+    
     if (!response.ok) {
-        throw new Error(`Error with TTS API: ${response.status} ${response.statusText}`);
+        throw new Error(`TTS API Error: ${response.status}`);
     }
-    const audioBuffer = await response.buffer();
-    return audioBuffer;
+    
+    return await response.arrayBuffer();
 }
 
-// POST endpoint for chat interaction
+const INAPPROPRIATE_WORDS = ['bad', 'offensive', 'inappropriate'];
+const MAX_MESSAGE_LENGTH = 500;
+
 app.post('/chat', async (req, res) => {
     const { userMessage } = req.body;
-    if (!userMessage) {
-        return res.status(400).json({ error: 'User message is required' });
+    
+    if (!userMessage || typeof userMessage !== 'string') {
+        return res.status(400).json({ 
+            error: 'Invalid input', 
+            message: 'User message must be a non-empty string' 
+        });
+    }
+
+    const cleanedMessage = userMessage
+        .trim()
+        .replace(/[^\w\s.?!,'-]/gi, '')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+
+    if (cleanedMessage.length > MAX_MESSAGE_LENGTH) {
+        return res.status(400).json({ 
+            error: 'Message too long', 
+            message: `Limit message to ${MAX_MESSAGE_LENGTH} characters` 
+        });
+    }
+
+    const containsInappropriate = INAPPROPRIATE_WORDS.some(word => 
+        cleanedMessage.includes(word)
+    );
+
+    if (containsInappropriate) {
+        return res.status(400).json({ 
+            error: 'Inappropriate content', 
+            message: 'Please keep the conversation respectful' 
+        });
     }
 
     try {
-        console.log('Received user message:', userMessage);
-
-        // Structured, machine-friendly prompt
         const prompt = JSON.stringify({
             character: "Andrew Tate",
-            description: "You are Andrew Tate, known for your strong, confident, and motivational personality. However, in this conversation, you are showing your softer side, offering 'pookie' replies, warm hugs, and comfort to the person you're talking to. You are caring, supportive, and provide reassurance while still maintaining your confidence.",
-            tone: "comforting, warm, caring, playful, reassuring",
-            personality_traits: [
-                "confident",
-                "caring",
-                "supportive",
-                "warm",
-                "strong",
-                "protective",
-                "motivational"
-            ],
-            interaction_style: "You offer playful and affectionate responses, often referring to the person as 'pookie,' and you provide comfort through warm words and gentle encouragement. You are still yourself, but you express care and concern for the person’s well-being, making them feel safe and appreciated.",
-            safety_measures: [
-                "Always maintain a respectful tone.",
-                "Avoid controversial or aggressive topics.",
-                "Keep the conversation light-hearted, comforting, and supportive.",
-                "Redirect any negative content into a space of positivity and care."
-            ],
-            response_instruction: "You will respond to the following message from the fan with a warm, playful, and comforting reply, staying within the character of Andrew Tate while focusing on providing emotional support and encouragement.",
-            message: userMessage
+            description: "Caring, supportive version of Andrew Tate offering comfort and motivation.",
+            message: cleanedMessage
         });
-        
 
-        // Generate content from the AI model
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = response.text().trim();
 
         if (!text) {
             throw new Error('Empty response from AI model');
         }
 
-        // Generate audio
         const audioBuffer = await say(text);
-        
-        // Convert audio buffer to base64
         const audioBase64 = audioBuffer.toString('base64');
 
-        // Send both text and audio
         res.json({ 
             botMessage: text,
             audio: audioBase64
         });
 
     } catch (error) {
-        console.error('Error in POST /chat:', error);
+        console.error('Chat Error:', error);
         res.status(500).json({ 
             error: 'Internal Server Error', 
-            message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            message: error.message
         });
     }
 });
 
-// Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react'
 import { Send, Mic, MicOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,7 +13,7 @@ const Ellipsis = () => (
   </div>
 )
 
-export default function Component() {
+export default function ChatbotComponent() {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -23,6 +22,8 @@ export default function Component() {
   const audioRef = useRef(null)
   const [audioUrl, setAudioUrl] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  const MAX_MESSAGE_LENGTH = 500
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -34,10 +35,21 @@ export default function Component() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!inputMessage.trim()) return
+    const trimmedMessage = inputMessage.trim()
 
-    const userMessage = inputMessage.trim()
-    const cleanedMessage = userMessage.replace(/[^\w\s]/gi, '').toLowerCase()
+    // Client-side validations
+    if (!trimmedMessage) return
+    if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
+      alert(`Message must be less than ${MAX_MESSAGE_LENGTH} characters`)
+      return
+    }
+
+    const userMessage = trimmedMessage
+    const cleanedMessage = userMessage
+      .replace(/[^\w\s.?!,'-]/gi, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+
     setMessages(prev => [...prev, { text: userMessage, isUser: true }])
     setInputMessage('')
     setIsLoading(true)
@@ -75,7 +87,7 @@ export default function Component() {
     } catch (err) {
       setError(err.message)
       setMessages(prev => prev.slice(0, -1).concat({ 
-        text: "I apologize but i can't reply to that. Could you try asking something appropriate?", 
+        text: "Sorry, I couldn't process that message. Could you try again?", 
         isUser: false,
         isError: true 
       }))
@@ -100,8 +112,8 @@ export default function Component() {
       <Card className="w-full max-w-md bg-gray-900 border-gray-800 text-white">
         <div className="flex flex-col items-center p-6 border-b border-gray-800">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Andrew_Tate_on_%27Anything_Goes_With_James_English%27_in_2021.jpg/220px-Andrew_Tate_on_%27Anything_Goes_With_James_English%27_in_2021.jpg"
-            alt="Taylor Swift"
+            src="/andrew-tate.jpg"
+            alt="Andrew Tate"
             className="w-24 h-24 rounded-lg mb-4"
           />
           <h1 className="text-2xl font-bold">Chat with Andrew Tate</h1>
@@ -132,6 +144,7 @@ export default function Component() {
               placeholder="Send a message..."
               className="flex-1 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
               disabled={isLoading}
+              maxLength={MAX_MESSAGE_LENGTH}
             />
             <Button type="submit" disabled={isLoading} className="bg-gray-800 hover:bg-gray-700">
               <Send className="w-4 h-4" />
