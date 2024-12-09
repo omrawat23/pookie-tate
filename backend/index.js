@@ -12,7 +12,7 @@ const apikey = process.env.API_KEY;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 app.use(cors({
-    origin: ['https://pookie-tate.vercel.app', 'http://localhost:5173'],
+    origin: 'https://taylorswiftt.vercel.app',
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -34,8 +34,10 @@ async function say(text) {
         },
         body: JSON.stringify({
             text: text,
-            voice_id: 'andrew-tate',
-            params: { model: 'ar-diff-50k' },
+            voice_id: 'taylor-swift',
+            params: {
+                model: 'ar-diff-50k',
+            },
         }),
     });
     
@@ -86,7 +88,7 @@ app.post('/chat', async (req, res) => {
     try {
         const prompt = JSON.stringify({
             character: "Andrew Tate",
-            description: "Caring, supportive version of Andrew Tate offering comfort and motivation.",
+            description: "You are Andrew Tate, known for your strong, confident, and motivational personality. However, in this conversation, you are showing your softer side, offering 'pookie' replies, warm hugs, and comfort to the person you're talking to. You are caring, supportive, and provide reassurance while still maintaining your confidence.",
             message: cleanedMessage
         });
 
